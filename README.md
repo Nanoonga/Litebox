@@ -51,34 +51,63 @@ However, [the `srcset` attribute of the HTML`<img>` element](https://www.oxyplug
 **Listing 1: Adaptive Density** scales arbitrary images to arbitrary presentation sizes, in this case the height and width of the viewport. This function may be applied to an image whenever the display geometry changes, such as when the window is resized, or the device is rotated. 
 
 ```js
-var window_size = [window_width, window_height],
+    // first we need to figure out how big the image has to be to fill the 
+    // window. 
 
-   image_size = [catalog[image_id][WIDTH],catalog[image_id][HEIGHT]],
+        // dimensions of the viewport in css pixels 
 
-   aspect_ratio = image_size[WIDTH] / image_size[HEIGHT],    
+    var window_size = [window_width, window_height],
 
-   render_size = (aspect_ratio >= 1) ? 
-      [ window_size[WIDTH], Math.floor(window_size[WIDTH] / aspect_ratio) ] : 
-      [ Math.floor(window_size[HEIGHT] * aspect_ratio), window_size[HEIGHT] ],
+        // dimensions of the image in css pixels
 
-   image_axis = (aspect_ratio >= 1) ? WIDTH : HEIGHT,  
+        image_size = [catalog[image_id][WIDTH],catalog[image_id][HEIGHT]],
 
-   dpr = devicePixelRatio,  
+        // aspect ratio of the image, e.g. 1.33:1, 1:2, etc.
 
-   render_mode = (image_size[image_axis] >= dpr * render_size[image_axis]) ? 
-'Density' : 'Area',       
+        aspect_ratio = image_size[WIDTH] / image_size[HEIGHT],    
 
-  download_size = (render_mode == 'Density') ? 
-        [render_size[WIDTH] * dpr, render_size[HEIGHT] * dpr] : 
-        image_size,
+        // which aspect is longer? WIDTH (landscape), or HEIGHT (portrait)?
 
-  render_url = `https://picsum.photos/id/${catalog[image_id][ID]}/
-${download_size[WIDTH]}/${download_size[HEIGHT]}`,
+        image_axis = (aspect_ratio >= 1) ? WIDTH : HEIGHT,  
 
-   adr = (render_mode=='Density') ? dpr : 
-        (image_size[image_axis] / render_size[image_axis]).toFixed(2),  
+        // scale the rendition to fit the window
+       
+        render_size = (aspect_ratio >= 1) ? 
+            [ window_size[WIDTH], Math.floor(window_size[WIDTH] / aspect_ratio) ] : 
+            [ Math.floor(window_size[HEIGHT] * aspect_ratio), window_size[HEIGHT] ],
 
-   pip = 100-((adr/dpr)*100);   
+    // now we need to know if the image contains enough pixels to pack the rendition 
+    // with 1x, 2x, 3x, etc. image detail
+
+        // pixel density of the display. 1 = standard, 2+ = super
+
+        dpr = devicePixelRatio,  
+
+        // Does the image contain enough pixels to cover an area _at least_ dpr * render size ? 
+        // 1 = yes, 0 = no
+        
+        render_mode = (image_size[image_axis] >= dpr * render_size[image_axis]) ? 1 : 0,
+
+        // if yes, tell the server to scale the picture to (dpr * rendition size) pixels (constant density)
+        // if no, fetch the whole image and let the browser scale it to fit (constant area)              
+
+        download_size = (render_mode) ? [dpr * render_size[WIDTH], dpr * render_size[HEIGHT]] : image_size,
+
+        // format the download request
+
+        render_url = `https://picsum.photos/id/${catalog[image_id][ID]}/${download_size[WIDTH]}/${download_size[HEIGHT]}`,
+
+   // provide some metrics for quality comparison. 
+
+        // adr = adaptive density ratio (image pixels : device pixels)
+
+        adr = (render_mode) ? dpr : (image_size[image_axis] / render_size[image_axis]).toFixed(2),    
+
+        // pip = percent interpolated pixels
+
+        pip = 100-((adr/dpr)*100);
+
+
 ```
 
 ### notes
