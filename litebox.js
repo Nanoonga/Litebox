@@ -172,30 +172,64 @@ function lightbox_open(image_id) {
     // Interesting piece of code:
     // A nontrivial algorithm that executes in a single declaration statement.
 
+
+    // first we need to figure out how big the image has to be to fill the 
+    // window. 
+
+        // dimensions of the viewport in css pixels 
+
     var window_size = [window_width, window_height],
+
+        // dimensions of the image in css pixels
 
         image_size = [catalog[image_id][WIDTH],catalog[image_id][HEIGHT]],
 
+        // aspect ratio of the image, e.g. 1.33:1, 1:2, etc.
+
         aspect_ratio = image_size[WIDTH] / image_size[HEIGHT],    
 
+        // which aspect is longer? WIDTH (landscape), or HEIGHT (portrait)?
+
+        image_axis = (aspect_ratio >= 1) ? WIDTH : HEIGHT,  
+
+        // scale the rendition to fit the window
+       
         render_size = (aspect_ratio >= 1) ? 
             [ window_size[WIDTH], Math.floor(window_size[WIDTH] / aspect_ratio) ] : 
             [ Math.floor(window_size[HEIGHT] * aspect_ratio), window_size[HEIGHT] ],
 
-        image_axis = (aspect_ratio >= 1) ? WIDTH : HEIGHT,  
+    // now we need to know if the image contains enough pixels to pack the rendition 
+    // with 1x, 2x, 3x, etc. image detail
+
+        // pixel density of the display. 1 = standard, 2+ = super
 
         dpr = devicePixelRatio,  
-        
-        render_mode = (image_size[image_axis] >= dpr * render_size[image_axis]) ? 'Density' : 'Area',       
 
-        download_size = (render_mode == 'Density') ? [render_size[WIDTH] * dpr, render_size[HEIGHT] * dpr] : 
-        image_size,
+        // Does the image contain enough pixels to cover an area _at least_ dpr * render size ? 
+        // 1 = yes, 0 = no
+        
+        render_mode = (image_size[image_axis] >= dpr * render_size[image_axis]) ? 1 : 0,
+
+        // if yes, tell the server to scale the picture to (dpr * rendition size) pixels (constant density)
+        // if no, fetch the whole image and let the browser scale it to fit (constant area)              
+
+        download_size = (render_mode) ? [render_size[WIDTH] * dpr, render_size[HEIGHT] * dpr] : image_size,
+
+        // format the download request
 
         render_url = `https://picsum.photos/id/${catalog[image_id][ID]}/${download_size[WIDTH]}/${download_size[HEIGHT]}`,
 
-        adr = (render_mode == 'Density') ? dpr : (image_size[image_axis] / render_size[image_axis]).toFixed(2),    
+   // provide some metrics for quality comparison. 
+
+        // adr = adaptive density ratio (image pixels : device pixels)
+
+        adr = (render_mode) ? dpr : (image_size[image_axis] / render_size[image_axis]).toFixed(2),    
+
+        // pip = percent interpolated pixels
 
         pip = 100-((adr/dpr)*100);
+
+
 
     $('img01').src = render_url;
 
@@ -214,24 +248,24 @@ function lightbox_open(image_id) {
                 <td class="col">${catalog[image_id][WIDTH]+'&thinsp;x&thinsp;'+catalog[image_id][HEIGHT]}</td>
             </tr>
             <tr>
-                <td class="stub">Window:</td><td class="col">${window_size[WIDTH]}&thinsp;x&thinsp;${window_size[HEIGHT]}</td>
+                <td class="stub">Window :</td><td class="col">${window_size[WIDTH]}&thinsp;x&thinsp;${window_size[HEIGHT]}</td>
             </tr>
             <tr>
                 <td class="stub">Render:</td>
                 <td class="col">${render_size[WIDTH] + '&thinsp;x&thinsp;' + render_size[HEIGHT]}</td>
             </tr>
             <tr>
+                <td class="stub">Download:</td>
+                <td class="col">${download_size[WIDTH] + '&thinsp;x&thinsp;' + download_size[HEIGHT]}</td>
+            </tr>
+
+            <tr>
                 <td class="stub">Mode:</td>
-                <td class="col">Constant ${render_mode}</td>
+                <td class="col">Constant ${(render_mode)?'Density':'Area'}</td>
             </tr>
             <tr>
                 <td class="stub">ADR / PIP:</td>
                 <td class="col">${adr}:${dpr} / ${pip}%</td>
-            </tr>
-
-            <tr>
-                <td class="stub">Download:</td>
-                <td class="col">${download_size[WIDTH] + '&thinsp;x&thinsp;' + download_size[HEIGHT]}</td>
             </tr>
         </table>`;
 
