@@ -48,8 +48,6 @@ However, [the `srcset` attribute of the HTML`<img>` element](https://www.oxyplug
 
 *Percent Interpolated Pixels (PIP)* -- What percentage of the image is composed of pseudo-pixels interpolated by the browser's image scaler to enlarge the image to presentation size.  
 
-
-
 **Listing 1: Adaptive Density** scales arbitrary images to arbitrary presentation sizes, in this case the height and width of the viewport. This function may be applied to an image whenever the display geometry changes, such as when the window is resized, or the device is rotated. 
 
 ```js
