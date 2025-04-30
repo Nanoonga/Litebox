@@ -213,7 +213,7 @@ function lightbox_open(image_id) {
         // if yes, tell the server to scale the picture to (dpr * rendition size) pixels (constant density)
         // if no, fetch the whole image and let the browser scale it to fit (constant area)              
 
-        download_size = (render_mode) ? [render_size[WIDTH] * dpr, render_size[HEIGHT] * dpr] : image_size,
+        download_size = (render_mode) ? [dpr * render_size[WIDTH], dpr * render_size[HEIGHT]] : image_size,
 
         // format the download request
 
@@ -384,19 +384,22 @@ function auto_paginate() {
 
                 // scale the image and compile a thumbnail
 
+                // see the function lightbox_open() for an annotated description 
+                // of the adaptive density algorithm
+
                 image_size = [catalog[page[i]][WIDTH],catalog[page[i]][HEIGHT]],
 
                 aspect_ratio = (image_size[HEIGHT] / image_size[WIDTH]),   
 
-                render_size = [ render_width, Math.floor(aspect_ratio * render_width) ],                
+                image_axis = (aspect_ratio >= 1) ? WIDTH : HEIGHT,                   
 
-                image_axis = (aspect_ratio >= 1) ? WIDTH : HEIGHT,                  
+                render_size = [ render_width, Math.floor(aspect_ratio * render_width) ],                
 
                 dpr = devicePixelRatio,
 
                 render_mode = (image_size[image_axis] >= dpr * render_size[image_axis]) ? 1 : 0,
 
-                download_size = (render_mode) ? [render_size[WIDTH] * dpr, render_size[HEIGHT] * dpr] : render_size,
+                download_size = (render_mode) ? [dpr * render_size[WIDTH], dpr * render_size[HEIGHT]] : render_size,
 
                 render_url = `https://picsum.photos/id/${catalog[page[i]][ID]}/${download_size[WIDTH]}/${download_size[HEIGHT]}`;
 
