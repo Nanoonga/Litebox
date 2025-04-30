@@ -225,6 +225,9 @@ function lightbox_open(image_id) {
 
         render_url = `${scheme}//picsum.photos/id/${catalog[image_id][ID]}/${download_size[WIDTH]}/${download_size[HEIGHT]}`,
 
+        // 
+
+
         adr = (render_mode>0) ? truncateIfZero((download_size[image_axis] / render_size[image_axis]).toFixed(2)) : 1,
 
         pip = (render_mode>0) ? Math.floor(100-((adr/dpr)*100)) : 0;
