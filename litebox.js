@@ -160,7 +160,6 @@ function truncateIfZero(num) {
   return decimalPart === 0 ? integerPart : num;
 }
 
-
 // lightbox functions
 
 function lightbox_open(image_id) {
@@ -207,17 +206,20 @@ function lightbox_open(image_id) {
         // super...... devicePixelRatio > 1 and image size >= devicePixelRatio * render size          
 */
 
-        // render_mode: standard if dpr==1 or image size <= render_size, else adaptive
+        // render_mode: 0 (standard HD) if dpr==1 or image size <= render_size, else 1 (adaptive hd)
  
         render_mode = (dpr==1 || image_size[image_axis] <= render_size[image_axis]) ? 0 : 1,
 
-        // render_mode: super if image_size >= dpr * render size, else leave render_mode unchanged
+        // render_mode: 2 (super HD) if image_size >= dpr * render size, else leave render_mode unchanged
 
         render_mode = (render_mode==1 && image_size[image_axis] >= dpr * render_size[image_axis]) ? 2 : render_mode,
 
+        // if mode = 2 (super HD), tell the server to scale the picture to (dpr * rendition size) pixels 
+        // otherwise, fetch the whole image
+
         download_size = (render_mode==2) ? [dpr * render_size[WIDTH], dpr * render_size[HEIGHT]] : image_size,        
 
-//        download_size = (render_mode==0) ? image_size : ((render_mode==2)?[dpr * render_size[WIDTH], dpr * render_size[HEIGHT]]:image_size),
+        // if mode = 0 (standard HD), don't interpolate, reduce the rendition_size to fit
 
         render_size = (render_mode==0) ? download_size : render_size, 
 
@@ -226,12 +228,6 @@ function lightbox_open(image_id) {
         adr = (render_mode>0) ? truncateIfZero((download_size[image_axis] / render_size[image_axis]).toFixed(2)) : 1,
 
         pip = (render_mode>0) ? Math.floor(100-((adr/dpr)*100)) : 0;
-
-
-print_r([dpr,render_mode,render_size,download_size]);
-
-
-   //     return;
 
     $('img01').src = render_url;
 
