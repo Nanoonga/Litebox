@@ -206,21 +206,30 @@ function lightbox_open(image_id) {
 
         dpr = devicePixelRatio,  
 
-        // Does the image contain enough pixels to cover an area _at least_ dpr * render size ? 
-        // 1 = yes, 0 = no
+        // Does the image contain enough pixels to render in Super HD? 
+        // 2 = yes, 1 = no
         
-        render_mode = (image_size[image_axis] >= dpr * render_size[image_axis]) ? 1 : 0,
+        render_mode = (image_size[image_axis] >= dpr * render_size[image_axis]) ? 2 : 1,
 
-        // if yes, tell the server to scale the picture to (dpr * rendition size) pixels (constant density)
-        // if no, fetch the whole image and let the browser scale it to fit (constant area)              
+        // Does the image contain enough pixels to render in Adaptive HD?  
+        // 1 = yes, 0 = no
 
-        download_size = (render_mode) ? [dpr * render_size[WIDTH], dpr * render_size[HEIGHT]] : image_size,
+        render_mode = (image_size[image_axis] > render_size[image_axis]) ? render_mode : 0,        
+
+        // if mode = 2 (super HD), tell the server to scale the picture to (dpr * rendition size) pixels 
+        // otherwise, fetch the whole image
+
+        download_size = (render_mode==2) ? [dpr * render_size[WIDTH], dpr * render_size[HEIGHT]] : image_size,       
+
+        // if mode = 0 (standard HD), don't interpolate, shrink the rendition_size to fit
+
+        render_size = (render_mode==0) ? image_size : render_size,
 
         // format the download request
 
         render_url = `${scheme}//picsum.photos/id/${catalog[image_id][ID]}/${download_size[WIDTH]}/${download_size[HEIGHT]}`,
 
-   // provide some metrics for quality comparison. 
+    // provide some metrics for quality comparison. 
 
         // adr = adaptive density ratio (image pixels : device pixels)
 
@@ -229,7 +238,6 @@ function lightbox_open(image_id) {
         // pip = percent interpolated pixels
 
         pip = 100-((adr/dpr)*100);
-
 
 
     $('img01').src = render_url;
@@ -262,11 +270,11 @@ function lightbox_open(image_id) {
 
             <tr>
                 <td class="stub">Mode:</td>
-                <td class="col">Constant ${(render_mode)?'Density':'Area'}</td>
+                <td class="col">Constant ${(render_mode==2) ? 'Super HD' : ((render_mode==1) ? 'Adaptive HD' : 'Standard HD')}</td>
             </tr>
             <tr>
-                <td class="stub">ADR / PIP:</td>
-                <td class="col">${adr}:${dpr} / ${pip}%</td>
+                <td class="stub">ADR (%int):</td>
+                <td class="col">[${adr}:${dpr}]  ${pip}%</td>
             </tr>
         </table>`;
 
