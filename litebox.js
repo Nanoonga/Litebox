@@ -154,7 +154,11 @@ function render_icon(name,size,fill) {
     return `<div style="margin:8px;"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" height="${size}" width="${size}" fill="${fill}">${svg_paths[name]}</svg></div>`;
 }
 
-
+function truncateIfZero(num) {
+  const integerPart = Math.trunc(num);
+  const decimalPart = num - integerPart;
+  return decimalPart === 0 ? integerPart : num;
+}
 
 
 // lightbox functions
@@ -169,13 +173,6 @@ function lightbox_open(image_id) {
 
     $('nfobox').style.top = (window_height-260)/2 + 'px';
     $('nfobox').style.left = (window_width-260)/2 + 'px';
-
-    // Interesting piece of code:
-    // A nontrivial algorithm that executes in a single declaration statement.
-
-
-    // first we need to figure out how big the image has to be to fill the 
-    // window. 
 
         // dimensions of the viewport in css pixels 
 
@@ -199,46 +196,42 @@ function lightbox_open(image_id) {
             [ window_size[WIDTH], Math.floor(window_size[WIDTH] / aspect_ratio) ] : 
             [ Math.floor(window_size[HEIGHT] * aspect_ratio), window_size[HEIGHT] ],
 
-    // now we need to know if the image contains enough pixels to pack the rendition 
-    // with 1x, 2x, 3x, etc. image detail
-
         // pixel density of the display. 1 = standard, 2+ = super
 
         dpr = devicePixelRatio,  
+/*
+        // render mode
+        // -----------
+        // standard... devicePixelRatio == 1 or image size <= render size
+        // adaptive... devicePixelRatio > 1 and image size > render size
+        // super...... devicePixelRatio > 1 and image size >= devicePixelRatio * render size          
+*/
 
-        // Does the image contain enough pixels to render in Super HD? 
-        // 2 = yes, 1 = no
-        
-        render_mode = (image_size[image_axis] >= dpr * render_size[image_axis]) ? 2 : 1,
+        // render_mode: standard if dpr==1 or image size <= render_size, else adaptive
+ 
+        render_mode = (dpr==1 || image_size[image_axis] <= render_size[image_axis]) ? 0 : 1,
 
-        // Does the image contain enough pixels to render in Adaptive HD?  
-        // 1 = yes, 0 = no
+        // render_mode: super if image_size >= dpr * render size, else leave render_mode unchanged
 
-        render_mode = (image_size[image_axis] > render_size[image_axis]) ? render_mode : 0,        
+        render_mode = (render_mode==1 && image_size[image_axis] >= dpr * render_size[image_axis]) ? 2 : render_mode,
 
-        // if mode = 2 (super HD), tell the server to scale the picture to (dpr * rendition size) pixels 
-        // otherwise, fetch the whole image
+        download_size = (render_mode==2) ? [dpr * render_size[WIDTH], dpr * render_size[HEIGHT]] : image_size,        
 
-        download_size = (render_mode==2) ? [dpr * render_size[WIDTH], dpr * render_size[HEIGHT]] : image_size,       
+//        download_size = (render_mode==0) ? image_size : ((render_mode==2)?[dpr * render_size[WIDTH], dpr * render_size[HEIGHT]]:image_size),
 
-        // if mode = 0 (standard HD), don't interpolate, shrink the rendition_size to fit
-
-        render_size = (render_mode==0) ? image_size : render_size,
-
-        // format the download request
+        render_size = (render_mode==0) ? download_size : render_size, 
 
         render_url = `${scheme}//picsum.photos/id/${catalog[image_id][ID]}/${download_size[WIDTH]}/${download_size[HEIGHT]}`,
 
-    // provide some metrics for quality comparison. 
+        adr = (render_mode>0) ? truncateIfZero((download_size[image_axis] / render_size[image_axis]).toFixed(2)) : 1,
 
-        // adr = adaptive density ratio (image pixels : device pixels)
+        pip = (render_mode>0) ? Math.floor(100-((adr/dpr)*100)) : 0;
 
-        adr = (render_mode) ? dpr : (image_size[image_axis] / render_size[image_axis]).toFixed(2),    
 
-        // pip = percent interpolated pixels
+print_r([dpr,render_mode,render_size,download_size]);
 
-        pip = 100-((adr/dpr)*100);
 
+   //     return;
 
     $('img01').src = render_url;
 
@@ -270,10 +263,10 @@ function lightbox_open(image_id) {
 
             <tr>
                 <td class="stub">Mode:</td>
-                <td class="col">Constant ${(render_mode==2) ? 'Super HD' : ((render_mode==1) ? 'Adaptive HD' : 'Standard HD')}</td>
+                <td class="col">${(render_mode==2) ? 'Super HD' : ((render_mode==1) ? 'Adaptive HD' : 'Standard HD')}</td>
             </tr>
             <tr>
-                <td class="stub">ADR (%int):</td>
+                <td class="stub">ADR int%:</td>
                 <td class="col">[${adr}:${dpr}]  ${pip}%</td>
             </tr>
         </table>`;
