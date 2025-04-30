@@ -45,7 +45,8 @@ const
     alt_max_width = 192,
     WIDTH = 0, HEIGHT = 1, ID = 2, AUTH = 3, UNSPL = 4, ROW = 5, // pointers into the catalog
     no = 0, yes = 1,
-    spinner = 'aperture.gif';
+    spinner = 'aperture.gif',
+    scheme = document.location.protocol;
 
 
 // preferences
@@ -217,7 +218,7 @@ function lightbox_open(image_id) {
 
         // format the download request
 
-        render_url = `https://picsum.photos/id/${catalog[image_id][ID]}/${download_size[WIDTH]}/${download_size[HEIGHT]}`,
+        render_url = `${scheme}//picsum.photos/id/${catalog[image_id][ID]}/${download_size[WIDTH]}/${download_size[HEIGHT]}`,
 
    // provide some metrics for quality comparison. 
 
@@ -401,7 +402,7 @@ function auto_paginate() {
 
                 download_size = (render_mode) ? [dpr * render_size[WIDTH], dpr * render_size[HEIGHT]] : render_size,
 
-                render_url = `https://picsum.photos/id/${catalog[page[i]][ID]}/${download_size[WIDTH]}/${download_size[HEIGHT]}`;
+                render_url = `${scheme}//picsum.photos/id/${catalog[page[i]][ID]}/${download_size[WIDTH]}/${download_size[HEIGHT]}`;
 
                 chtml[i] = `<img class="brick" style="top:${ 
                     column_height[j]
