@@ -28,7 +28,7 @@ Computed HTML (CHTML) is a method for developing arbitrarily sophisticated web a
 
 CHTML uses JavaScript to compile a document layout in RAM and passes it to the browser's HTML interpreter as immediate data, rendering the layout in a single pass.
 
-Because all necessary attributes are specified, the browser never has to backtrack or repaint. The user interface is rendered instantly, and becomes interactive in less than a second regardless of layout complexity. 
+Because all necessary attributes are specified, the browser never has to backtrack or repaint. The user interface is rendered instantly, and becomes interactive in a fraction of a second regardless of layout complexity. 
 
 ## Adaptive Density
 
@@ -36,78 +36,98 @@ Super HD (our term for HiDPI video displays like Apple's "Retina") considerably 
 
 However, [the `srcset` attribute of the HTML`<img>` element](https://www.oxyplug.com/optimization/device-pixel-ratio#serve-image-img-tag-based-on-dpr) is grossly unsuitable for any practical (large, heterogenous, dynamic) media collection because it would involve rendering, storing, and serving a different version of every image for every supported DevicePixelRatio at every presentation size in order for the browser to automagically choose the "best" rendition for the circumstances. 
 
-*Adaptive Density* is an algorithm that holds either the presentation size or the pixel density constant, and computes the resolution necessary to display an image that fulfills the primary constraint. The image may then be downloaded from a server capable of scaling pictures to arbitrary dimensions.
+*Adaptive Density* is an algorithm that scales arbitrary images to arbitrary presentation sizes at arbitrary pixel densities. This function may be (re)applied to an image whenever the display geometry changes, such as when the window is resized, or the device is rotated. The image may then be (re)downloaded from a server capable of scaling images to arbitrary dimensions. 
 
-**Mode 1: Constant Density** -- any rendition where the image size >= DevicePixelratio * presentation size, downsampled as necessary by the server. One image pixel per CSS pixel, the best rendition the display is capable of. 
 
-**Mode 0: Constant Area** -- any rendition where the image size < DevicePixelratio * presentation size, upsampled as necessary by the browser. The best rendition the display is capable of *under the circumstances*, which might range from better than Standard HD on a Super HD display to indistinguishable from a Constant Density rendition. 
 
-**Rendition Metrics**
+### Rendition Modes
 
-*Adaptive Density Ratio (ADR)* -- image pixels per device pixel (0.88:1, 1.25:2, etc). The shortfall in image resolution expressed as a ratio. The lower the number on the left, the more the image has to be spread to fit.
+**Standard HD** [1:dpr] -- All displays with a devicePixelRatio of 1, and all images where image size <= render size. Images are downsampled as necessary for Standard HD displays, but never upsampled for Super HD displays because there would be fewer than one image pixel per four or more hardware pixels  (>=75% interpolation) at a considerable reduction in image quality. 
+
+**Super HD** [dpr:dpr] -- Super HD displays where image size >= devicePixelRatio * image size. Images are fetched at a multiple of the devicePixelRatio, yielding one image pixel per hardware pixel. The best rendition the display is capable of.
+
+**Adaptive HD** [adr:dpr] -- SuperHD displays where render size < image size < devicePixelRatio * image size. Images are downloaded at their original size, and upsampled by the browser to align with the devicePixelRatio, where dpr > adr > 1. The best rendition the display is capable of *under the circumstances*, ranging from better than Standard HD to indistinguishable from Super HD.
+
+
+
+### Rendition Metrics
+
+*Adaptive Density Ratio (ADR)* -- image pixels per device pixel (1:1, 1.41:2, etc). The shortfall in image resolution expressed as a ratio. The greater the difference, the more the image has to be spread to fit.
 
 *Percent Interpolated Pixels (PIP)* -- What percentage of the image is composed of pseudo-pixels interpolated by the browser's image scaler to enlarge the image to presentation size.  
 
-**Listing 1: Adaptive Density** scales arbitrary images to arbitrary presentation sizes, in this case the height and width of the viewport. This function may be applied to an image whenever the display geometry changes, such as when the window is resized, or the device is rotated. 
+
+
+**Listing 1: Adaptive Density** 
 
 ```js
-    // first we need to figure out how big the image has to be to fill the 
-    // window. 
+// dimensions of the viewport in css pixels 
 
-        // dimensions of the viewport in css pixels 
+window_size = [window_width, window_height],
 
-    var window_size = [window_width, window_height],
+// dimensions of the image in css pixels
 
-        // dimensions of the image in css pixels
+image_size = [catalog[image_id][WIDTH],catalog[image_id][HEIGHT]],
 
-        image_size = [catalog[image_id][WIDTH],catalog[image_id][HEIGHT]],
+// aspect ratio of the image, e.g. 1.33:1, 1:2, etc.
 
-        // aspect ratio of the image, e.g. 1.33:1, 1:2, etc.
+aspect_ratio = image_size[WIDTH] / image_size[HEIGHT],    
 
-        aspect_ratio = image_size[WIDTH] / image_size[HEIGHT],    
+// which aspect is longer? WIDTH (landscape), or HEIGHT (portrait)?
 
-        // which aspect is longer? WIDTH (landscape), or HEIGHT (portrait)?
+image_axis = (aspect_ratio >= 1) ? WIDTH : HEIGHT,  
 
-        image_axis = (aspect_ratio >= 1) ? WIDTH : HEIGHT,  
+// scale the rendition to fit the window
 
-        // scale the rendition to fit the window
-       
-        render_size = (aspect_ratio >= 1) ? 
-            [ window_size[WIDTH], Math.floor(window_size[WIDTH] / aspect_ratio) ] : 
-            [ Math.floor(window_size[HEIGHT] * aspect_ratio), window_size[HEIGHT] ],
+render_size = (aspect_ratio >= 1) ? 
+    [ window_size[WIDTH], Math.floor(window_size[WIDTH] / aspect_ratio) ] : 
+    [ Math.floor(window_size[HEIGHT] * aspect_ratio), window_size[HEIGHT] ],
 
-    // now we need to know if the image contains enough pixels to pack the rendition 
-    // with 1x, 2x, 3x, etc. image detail
+// pixel density of the display. 1 = standard, 2+ = super
 
-        // pixel density of the display. 1 = standard, 2+ = super
+dpr = devicePixelRatio;
 
-        dpr = devicePixelRatio,  
+if(dpr==1 || image_size[image_axis] <= render_size[image_axis]) {
 
-        // Does the image contain enough pixels to cover an area _at least_ dpr * render size ? 
-        // 1 = yes, 0 = no
-        
-        render_mode = (image_size[image_axis] >= dpr * render_size[image_axis]) ? 1 : 0,
+    // Standard HD
 
-        // if yes, tell the server to scale the picture to (dpr * rendition size) pixels (constant density)
-        // if no, fetch the whole image and let the browser scale it to fit (constant area)              
+    render_mode = 0;
 
-        download_size = (render_mode) ? [dpr * render_size[WIDTH], dpr * render_size[HEIGHT]] : image_size,
+    if(image_size[image_axis] <= render_size[image_axis]) {
 
-        // format the download request
+        download_size = render_size = image_size;
 
-        render_url = `https://picsum.photos/id/${catalog[image_id][ID]}/${download_size[WIDTH]}/${download_size[HEIGHT]}`,
+    } else {
 
-   // provide some metrics for quality comparison. 
+        download_size = render_size;
+    }
 
-        // adr = adaptive density ratio (image pixels : device pixels)
+} else if(dpr>1 && image_size[image_axis] >= dpr * render_size[image_axis]) {
 
-        adr = (render_mode) ? dpr : (image_size[image_axis] / render_size[image_axis]).toFixed(2),    
+    // Super HD 
 
-        // pip = percent interpolated pixels
+    render_mode = 2;
 
-        pip = 100-((adr/dpr)*100);
+    download_size = [dpr * render_size[WIDTH], dpr * render_size[HEIGHT]];
 
+} else {
 
+    // Adaptive HD
+
+    render_mode = 1;
+
+    download_size = image_size;
+}
+
+render_url = `${scheme}//picsum.photos/id/${catalog[image_id][ID]}/${download_size[WIDTH]}/${download_size[HEIGHT]}`,
+
+// some statistics for comparison
+// adr - adaptive density ratio [ image pixels : hardware pixels ]
+// pip - percent interpolated pixels 
+
+adr = (render_mode>0) ? truncateIfZero((download_size[image_axis] / render_size[image_axis]).toFixed(2)) : 1,
+
+pip = (render_mode>0) ? Math.floor(100-((adr/dpr)*100)) : 0;
 ```
 
 ### notes
@@ -116,7 +136,7 @@ However, [the `srcset` attribute of the HTML`<img>` element](https://www.oxyplug
 
 - It may surprise you how little the rendition quality is affected even with a considerable fraction of interpolated pixels. I believe that on Apple devices especially, the image scaler is probably tuned to the display panel, and this is the primary reason that we put the browser in charge of any upscaling to be done rather than downloading an upscaled image from the server. 
 
-- It is a property of raster graphic images that downsampling increases sharpness of definition, so nearly all images will exhibit improved detail simply by being properly scaled for the display panel they're being viewed on. 
+- It is a property of raster graphic images that downsampling increases sharpness of definition, so nearly all images will exhibit improved detail even on Standard HD displays simply by being properly scaled for the presentation context. 
 
 ---
 

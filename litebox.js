@@ -164,6 +164,20 @@ function truncateIfZero(num) {
 
 function lightbox_open(image_id) {
 
+var
+    window_size,
+    image_size,
+    aspect_ratio,
+    image_axis,
+    render_size,
+    dpr,
+    render_mode,
+    download_size,
+    render_url,
+    adr,
+    pip;
+
+
     $('lightbox').style.display = 'block';
     $('menu').style.visibility = 'visible';
     $('nfobox').style.visibility = 'hidden';    
@@ -173,64 +187,74 @@ function lightbox_open(image_id) {
     $('nfobox').style.top = (window_height-260)/2 + 'px';
     $('nfobox').style.left = (window_width-260)/2 + 'px';
 
-        // dimensions of the viewport in css pixels 
 
-    var window_size = [window_width, window_height],
+    // dimensions of the viewport in css pixels 
 
-        // dimensions of the image in css pixels
+    window_size = [window_width, window_height],
 
-        image_size = [catalog[image_id][WIDTH],catalog[image_id][HEIGHT]],
+    // dimensions of the image in css pixels
 
-        // aspect ratio of the image, e.g. 1.33:1, 1:2, etc.
+    image_size = [catalog[image_id][WIDTH],catalog[image_id][HEIGHT]],
 
-        aspect_ratio = image_size[WIDTH] / image_size[HEIGHT],    
+    // aspect ratio of the image, e.g. 1.33:1, 1:2, etc.
 
-        // which aspect is longer? WIDTH (landscape), or HEIGHT (portrait)?
+    aspect_ratio = image_size[WIDTH] / image_size[HEIGHT],    
 
-        image_axis = (aspect_ratio >= 1) ? WIDTH : HEIGHT,  
+    // which aspect is longer? WIDTH (landscape), or HEIGHT (portrait)?
 
-        // scale the rendition to fit the window
-       
-        render_size = (aspect_ratio >= 1) ? 
-            [ window_size[WIDTH], Math.floor(window_size[WIDTH] / aspect_ratio) ] : 
-            [ Math.floor(window_size[HEIGHT] * aspect_ratio), window_size[HEIGHT] ],
+    image_axis = (aspect_ratio >= 1) ? WIDTH : HEIGHT,  
 
-        // pixel density of the display. 1 = standard, 2+ = super
+    // scale the rendition to fit the window
+   
+    render_size = (aspect_ratio >= 1) ? 
+        [ window_size[WIDTH], Math.floor(window_size[WIDTH] / aspect_ratio) ] : 
+        [ Math.floor(window_size[HEIGHT] * aspect_ratio), window_size[HEIGHT] ],
 
-        dpr = devicePixelRatio,  
-/*
-        // render mode
-        // -----------
-        // standard... devicePixelRatio == 1 or image size <= render size
-        // adaptive... devicePixelRatio > 1 and image size > render size
-        // super...... devicePixelRatio > 1 and image size >= devicePixelRatio * render size          
-*/
+    // pixel density of the display. 1 = standard, 2+ = super
 
-        // render_mode: 0 (standard HD) if dpr==1 or image size <= render_size, else 1 (adaptive hd)
- 
-        render_mode = (dpr==1 || image_size[image_axis] <= render_size[image_axis]) ? 0 : 1,
+    dpr = devicePixelRatio;
 
-        // render_mode: 2 (super HD) if image_size >= dpr * render size, else leave render_mode unchanged
+    if(dpr==1 || image_size[image_axis] <= render_size[image_axis]) {
 
-        render_mode = (render_mode==1 && image_size[image_axis] >= dpr * render_size[image_axis]) ? 2 : render_mode,
+        // Standard HD
 
-        // if mode = 2 (super HD), tell the server to scale the picture to (dpr * rendition size) pixels 
-        // otherwise, fetch the whole image
+        render_mode = 0;
 
-        download_size = (render_mode==2) ? [dpr * render_size[WIDTH], dpr * render_size[HEIGHT]] : image_size,        
+        if(image_size[image_axis] <= render_size[image_axis]) {
 
-        // if mode = 0 (standard HD), don't interpolate, reduce the rendition_size to fit
+            download_size = render_size = image_size;
 
-        render_size = (render_mode==0) ? download_size : render_size, 
+        } else {
 
-        render_url = `${scheme}//picsum.photos/id/${catalog[image_id][ID]}/${download_size[WIDTH]}/${download_size[HEIGHT]}`,
+            download_size = render_size;
+        }
 
-        // 
+    } else if(dpr>1 && image_size[image_axis] >= dpr * render_size[image_axis]) {
 
+        // Super HD 
 
-        adr = (render_mode>0) ? truncateIfZero((download_size[image_axis] / render_size[image_axis]).toFixed(2)) : 1,
+        render_mode = 2;
 
-        pip = (render_mode>0) ? Math.floor(100-((adr/dpr)*100)) : 0;
+        download_size = [dpr * render_size[WIDTH], dpr * render_size[HEIGHT]];
+
+    } else {
+
+        // Adaptive HD
+
+        render_mode = 1;
+
+        download_size = image_size;
+    }
+
+    render_url = `${scheme}//picsum.photos/id/${catalog[image_id][ID]}/${download_size[WIDTH]}/${download_size[HEIGHT]}`,
+
+    // some statistics for comparison
+    // adr - adaptive density ratio [ image pixels : hardware pixels ]
+    // pip - percent interpolated pixels 
+
+    adr = (render_mode>0) ? truncateIfZero((download_size[image_axis] / render_size[image_axis]).toFixed(2)) : 1,
+
+    pip = (render_mode>0) ? Math.floor(100-((adr/dpr)*100)) : 0;
 
     $('img01').src = render_url;
 
@@ -249,9 +273,6 @@ function lightbox_open(image_id) {
                 <td class="col">${catalog[image_id][WIDTH]+'&thinsp;x&thinsp;'+catalog[image_id][HEIGHT]}</td>
             </tr>
             <tr>
-                <td class="stub">Window :</td><td class="col">${window_size[WIDTH]}&thinsp;x&thinsp;${window_size[HEIGHT]}</td>
-            </tr>
-            <tr>
                 <td class="stub">Render:</td>
                 <td class="col">${render_size[WIDTH] + '&thinsp;x&thinsp;' + render_size[HEIGHT]}</td>
             </tr>
@@ -259,7 +280,6 @@ function lightbox_open(image_id) {
                 <td class="stub">Download:</td>
                 <td class="col">${download_size[WIDTH] + '&thinsp;x&thinsp;' + download_size[HEIGHT]}</td>
             </tr>
-
             <tr>
                 <td class="stub">Mode:</td>
                 <td class="col">${(render_mode==2) ? 'Super HD' : ((render_mode==1) ? 'Adaptive HD' : 'Standard HD')}</td>
