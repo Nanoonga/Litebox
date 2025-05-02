@@ -62,7 +62,7 @@ if(DOWNLOAD_LIMIT) {
 
 
 
-// Computed HTML standard functions
+// Computed HTML runtime functions
 
 function get_window_geometry() {
 

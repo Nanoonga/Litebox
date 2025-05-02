@@ -38,8 +38,6 @@ However, [the `srcset` attribute of the HTML`<img>` element](https://www.oxyplug
 
 *Adaptive Density* is an algorithm that scales arbitrary images to arbitrary presentation sizes at arbitrary pixel densities. This function may be (re)applied to an image whenever the display geometry changes, such as when the window is resized, or the device is rotated. The image may then be (re)downloaded from a server capable of scaling images to arbitrary dimensions. 
 
-
-
 ### Rendition Modes
 
 **Standard HD** [1:dpr] -- All displays with a devicePixelRatio of 1, and all images where image size <= render size. Images are downsampled as necessary for Standard HD displays, but never upsampled for Super HD displays because there would be fewer than one image pixel per four or more hardware pixels  (>=75% interpolation) at a considerable reduction in image quality. 
@@ -47,8 +45,6 @@ However, [the `srcset` attribute of the HTML`<img>` element](https://www.oxyplug
 **Super HD** [dpr:dpr] -- Super HD displays where image size >= devicePixelRatio * image size. Images are fetched at a multiple of the devicePixelRatio, yielding one image pixel per hardware pixel. The best rendition the display is capable of.
 
 **Adaptive HD** [adr:dpr] -- SuperHD displays where render size < image size < devicePixelRatio * image size. Images are downloaded at their original size, and upsampled by the browser to align with the devicePixelRatio, where dpr > adr > 1. The best rendition the display is capable of *under the circumstances*, ranging from better than Standard HD to indistinguishable from Super HD.
-
-
 
 ### Rendition Metrics
 
