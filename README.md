@@ -2,9 +2,9 @@
 
 > An Adaptive Density Graphical Photo Browser written in Computed HTML
 
-![litebox.jpg](litebox.jpg)
+![litebox.jpg](Litebox.jpg)
 
-## 
+# 
 
 ## Overview
 
@@ -16,7 +16,7 @@ LiteBox introduces **Adaptive Density**, a strategy for optimizing image quality
 
 ## Getting Started
 
-* [**View the Live Demo**](https://nanoonga.github.io/litebox/) on your PC, notebook, phone and tablet, or
+* [**View the Live Demo**](https://nanoonga.github.io/Litebox/) on your PC, notebook, phone and tablet, or
 
 * Clone or download the repo, and drag the file index.html into an open browser window, then
 
@@ -36,7 +36,7 @@ Super HD (our term for HiDPI video displays like Apple's "Retina") considerably 
 
 However, [the `srcset` attribute of the HTML`<img>` element](https://www.oxyplug.com/optimization/device-pixel-ratio#serve-image-img-tag-based-on-dpr) is grossly unsuitable for any practical (large, heterogenous, dynamic) media collection because it would involve rendering, storing, and serving a different version of every image for every supported DevicePixelRatio at every presentation size in order for the browser to automagically choose the "best" rendition for the circumstances. 
 
-*Adaptive Density* is an algorithm that scales arbitrary images to arbitrary presentation sizes at arbitrary pixel densities. This function may be (re)applied to an image whenever the display geometry changes, such as when the window is resized, or the device is rotated. The image may then be (re)downloaded from a server capable of scaling images to arbitrary dimensions. 
+*Adaptive Density* is an algorithm that scales arbitrary images to arbitrary presentation sizes at arbitrary pixel densities. This function may be (re)applied to an image whenever the display geometry changes, such as when the window is resized, or the device is rotated. The image may then be downloaded from a server capable of scaling images to requested dimensions. 
 
 ### Rendition Modes
 
@@ -51,8 +51,6 @@ However, [the `srcset` attribute of the HTML`<img>` element](https://www.oxyplug
 *Adaptive Density Ratio (ADR)* -- image pixels per device pixel (1:1, 1.41:2, etc). The shortfall in image resolution expressed as a ratio. The greater the difference, the more the image has to be spread to fit.
 
 *Percent Interpolated Pixels (PIP)* -- What percentage of the image is composed of pseudo-pixels interpolated by the browser's image scaler to enlarge the image to presentation size.  
-
-
 
 **Listing 1: Adaptive Density** 
 
