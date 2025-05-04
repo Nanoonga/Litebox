@@ -61,7 +61,6 @@ if(DOWNLOAD_LIMIT) {
 
 
 
-
 // Computed HTML runtime functions
 
 function get_window_geometry() {
@@ -256,8 +255,6 @@ var
 
     pip = (render_mode>0) ? Math.floor(100-((adr/dpr)*100)) : 0;
 
-    $('img01').src = render_url;
-
     $('nfobox').innerHTML = `
         <table>
             <tr>
@@ -290,16 +287,29 @@ var
             </tr>
         </table>`;
 
+    $('img01').src = spinner;        
+
     last_n = image_id;
+
+    load_image(render_url);
 }
 
+function load_image(url) {
+
+  var image = new Image();
+  image.onload = function() {
+    $('img01').src = image.src;        
+  };
+  image.onerror = function() {};
+  image.src = url;
+}
 
 function lightbox_close() {
 
     nfobox_close();
     $('menu').style.visibility = 'hidden';
     $('lightbox').style.display = 'none';    
-    $('img01').src = spinner;
+    //$('img01').src = spinner;
 }
 
 
@@ -511,8 +521,11 @@ document.addEventListener("DOMContentLoaded", function(){
     init();
 
     $('form1').innerHTML = `
-
     <div id="browser">
+    <header>
+        <div id=logo>Litebox</div>
+        <a href="https://github.com/Nanoonga/Litebox" role=button class=button>GitHub</a>
+    </header>
         <div id="pga">
             <div id="gallery"></div>
         </div>
@@ -539,6 +552,8 @@ document.addEventListener("DOMContentLoaded", function(){
     }
 
     // fetch and render the first page
+
+    return;
 
     auto_paginate();
 });
