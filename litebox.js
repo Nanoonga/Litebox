@@ -553,7 +553,5 @@ document.addEventListener("DOMContentLoaded", function(){
 
     // fetch and render the first page
 
-    return;
-
     auto_paginate();
 });
