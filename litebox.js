@@ -442,7 +442,7 @@ function auto_paginate() {
                     render_size[WIDTH]
                 }px;height:${
                     render_size[HEIGHT]
-                }px;" src="${ render_url }" loading=lazy onclick="lightbox_open(${
+                }px;" src="${ render_url }" alt="" loading=lazy onclick="lightbox_open(${
                     page[i]
                 });">`; // <div class="brick-id"></div>
 
@@ -533,15 +533,15 @@ document.addEventListener("DOMContentLoaded", function(){
 
     <div id="lightbox">
         <div id="imgdiv" class="cover" onclick="nfobox_toggle();">
-            <img class="slide" id="img01" src="${ spinner }" onclick="">
+            <img class="slide" id="img01" src="${ spinner }" alt="placeholder">
         </div>
     </div>
 
     <div id="nfobox" style="top:${(window_height-260)/2}px;left:${(window_width-260)/2}px;" onclick="nfobox_toggle();"></div>
 
     <nav id="menu" class="menu" style="visibility:hidden;">
-        <span onclick="nfobox_toggle();">${render_icon("info",24)}</span>
-        <span onclick="lightbox_close();">${render_icon("exit",24)}</span>
+        <div onclick="nfobox_toggle();">${render_icon("info",24)}</div>
+        <div onclick="lightbox_close();">${render_icon("exit",24)}</div>
     </nav>`;
 
     if(PAGINATE) {
