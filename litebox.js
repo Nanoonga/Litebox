@@ -56,8 +56,8 @@ const
 
     DOWNLOAD_LIMIT = 0, // 0 = no limit, else truncate catalog to n = DOWNLOAD_LIMIT photos
 
-    REPROBATE_MODE = yes; /* We want an honest evaluation this script, not a critique of picsum's placeholder service, 
-    or dozens of ignorant and unhelpful optimization suggestions cascading from Lighthouse's difficulty comprehending
+    REPROBATE_MODE = no; /* We want an honest evaluation this script, not a critique of picsum's placeholder service, 
+    or dozens of unhelpful optimization suggestions cascading from Lighthouse's difficulty comprehending
     anything that doesn't look like it was made with WordPress. 
 
     Do the math, but spread a 1x1 transparent gif across the facade instead of fetching the corresponding image from 
