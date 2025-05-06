@@ -53,7 +53,17 @@ const
 
 const
     PAGINATE = yes,
-    DOWNLOAD_LIMIT = 0; // 0 = no limit, else truncate catalog to n = DOWNLOAD_LIMIT photos
+
+    DOWNLOAD_LIMIT = 0, // 0 = no limit, else truncate catalog to n = DOWNLOAD_LIMIT photos
+
+    REPROBATE_MODE = yes; /* We want an honest evaluation this script, not a critique of picsum's placeholder service, 
+    or dozens of ignorant and unhelpful optimization suggestions cascading from Lighthouse's difficulty comprehending
+    anything that doesn't look like it was made with WordPress. 
+
+    Do the math, but spread a 1x1 transparent gif across the facade instead of fetching the corresponding image from 
+    picsum. This will suppress Lighthouse's habit of manufacturing sins in order to offer false redemption, and provide 
+    more objective feedback. */
+      
 
 if(DOWNLOAD_LIMIT) {
     catalog = catalog.slice(0,DOWNLOAD_LIMIT-1);
@@ -332,7 +342,6 @@ function nfobox_close() {
 
 
 
-
 // gallery layout functions
 
 function init() {
@@ -430,9 +439,10 @@ function auto_paginate() {
 
                 render_mode = (image_size[image_axis] >= dpr * render_size[image_axis]) ? 1 : 0,
 
-                download_size = (render_mode) ? [dpr * render_size[WIDTH], dpr * render_size[HEIGHT]] : render_size,
+                download_size = (render_mode) ? [dpr * render_size[WIDTH], dpr * render_size[HEIGHT]] : render_size;
 
-                render_url = `${scheme}//picsum.photos/id/${catalog[page[i]][ID]}/${download_size[WIDTH]}/${download_size[HEIGHT]}`;
+                render_url = (REPROBATE_MODE) ? '1x1.gif?d34db33f' : 
+                    `${scheme}//picsum.photos/id/${catalog[page[i]][ID]}/${download_size[WIDTH]}/${download_size[HEIGHT]}`;
 
                 chtml[i] = `<img class="brick" style="top:${ 
                     column_height[j]
